@@ -71,7 +71,6 @@ def minimize_marginals(graph, initial_estimate, pose_options):
     return best_pose, best_landmark, sum_of_marginals
 
 def minimize_errors(graph, initial_estimate, pose_options):
-    #TODO: try different pose and landmark options here, and keep the one with the lowest resulting error.
     best_score = float("inf")
     best_pose = None
     best_landmark = None
@@ -84,19 +83,11 @@ def minimize_errors(graph, initial_estimate, pose_options):
             trial_result = optimize(trial_graph, trial_estimate)
             trial_graph = add_landmark_measurement(trial_graph, trial_result, pose_5, landmark)
             trial_result = optimize(trial_graph, trial_result)
-# TODO: create a list of errors (each index corresponds to a pose) and add the error of each pose to the list
-            marginals = gtsam.Marginals(trial_graph, trial_result)
-            list_of_errors = [marginals.marginalCovariance(X(p)).sum() for p in [1, 2, 3]]
-            score = sum(list_of_errors)
-# TODO: compute the sum of the errors and return it along with the best pose and landmark
-            score = sum(list_of_errors)
+            score = trial_graph.error(trial_result)
             if score < best_score:
                 best_score = score
                 best_pose = label
                 best_landmark = landmark
-                best_marginals = marginals
 
-    sum_of_errors = best_marginals.marginalCovariance(X(1)).sum() + best_marginals.marginalCovariance(X(2)).sum() + best_marginals.marginalCovariance(X(3)).sum()
-    pose_5 = pose_options[best_pose]
-    graph, initial_estimate = add_pose(graph, initial_estimate, pose_5)
+    sum_of_errors = np.sqrt(best_score)
     return best_pose, best_landmark, sum_of_errors
